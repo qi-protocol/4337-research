@@ -1,3 +1,4 @@
+mod utils;
 use aa_bundler_grpc::{
     bundler_client::BundlerClient, bundler_service_run, uo_pool_client::UoPoolClient,
     uopool_service_run,

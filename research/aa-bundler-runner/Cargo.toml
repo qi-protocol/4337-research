@@ -23,3 +23,4 @@ pin-utils = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15.0"
 env_logger = "0.10.0"
+tempdir = "0.3.7"
