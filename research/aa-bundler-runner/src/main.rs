@@ -2,25 +2,25 @@ use aa_bundler_grpc::{
     bundler_client::BundlerClient, bundler_service_run, uo_pool_client::UoPoolClient,
     uopool_service_run,
 };
-use std::net::{IpAddr, Ipv4Addr};
-use env_logger::Env;
-use std::net::SocketAddr;
-use aa_bundler_primitives::{UoPoolMode, Chain, Wallet};
+use aa_bundler_primitives::{Chain, UoPoolMode, Wallet};
 use aa_bundler_rpc::{
     debug_api::{DebugApiServer, DebugApiServerImpl},
     eth_api::{EthApiServer, EthApiServerImpl},
     web3_api::{Web3ApiServer, Web3ApiServerImpl},
     JsonRpcServer,
 };
-use std::env;
 use anyhow::{format_err, Result};
+use dotenv::dotenv;
+use env_logger::Env;
 use ethers::{
     providers::{Http, Middleware, Provider},
     types::{Address, U256},
 };
+use std::env;
+use std::net::SocketAddr;
+use std::net::{IpAddr, Ipv4Addr};
 use std::{collections::HashSet, future::pending, panic, sync::Arc};
 use tracing::info;
-use dotenv::dotenv;
 
 use pin_utils::pin_mut;
 use std::{future::Future, str::FromStr};
@@ -67,7 +67,6 @@ where
     Ok(())
 }
 fn main() -> Result<()> {
-
     env_logger::Builder::from_env(
         Env::default().default_filter_or("info"), // .default_filter_or("trace")
     )
@@ -107,13 +106,12 @@ fn main() -> Result<()> {
                 info!("Starting uopool gRPC service...");
                 uopool_service_run(
                     // uopool service listen address
-                    SocketAddr::new(
-                        IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
-                        3001
-                    ),
+                    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 3001),
                     // entry points
-                    vec!["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789".parse::<Address>().unwrap()],
-                    // execution client 
+                    vec!["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
+                        .parse::<Address>()
+                        .unwrap()],
+                    // execution client
                     eth_client.clone(),
                     // chain
                     chain,
@@ -131,30 +129,23 @@ fn main() -> Result<()> {
                     UoPoolMode::Standard,
                 )
                 .await?;
-                info!(
-                    "Started uopool gRPC service at {:}",
-                    "127.0.0.1:3001",
-                );
+                info!("Started uopool gRPC service at {:}", "127.0.0.1:3001",);
 
                 info!("Connecting to uopool gRPC service");
-                let uopool_grpc_client = UoPoolClient::connect(format!(
-                    "http://{}",
-                    "127.0.0.1:3001",
-                ))
-                .await?;
+                let uopool_grpc_client =
+                    UoPoolClient::connect(format!("http://{}", "127.0.0.1:3001",)).await?;
                 info!("Connected to uopool gRPC service");
 
                 info!("Starting bundler gRPC service...");
                 bundler_service_run(
                     // bundler service listen address
-                    SocketAddr::new(
-                        IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
-                        3002
-                    ),
+                    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 3002),
                     // wallet
                     wallet,
                     // entry points
-                    vec!["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789".parse::<Address>().unwrap()],
+                    vec!["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
+                        .parse::<Address>()
+                        .unwrap()],
                     // execution client rpc endpoint
                     eth_client_address.clone(),
                     // chain
@@ -169,10 +160,7 @@ fn main() -> Result<()> {
                     10u64,
                     uopool_grpc_client.clone(),
                 );
-                info!(
-                    "Started bundler gRPC service at {:}",
-                    "127.0.0.1:3002",
-                );
+                info!("Started bundler gRPC service at {:}", "127.0.0.1:3002",);
 
                 info!("Starting bundler JSON-RPC server...");
                 tokio::spawn({
@@ -180,10 +168,11 @@ fn main() -> Result<()> {
                         let api: HashSet<String> =
                             HashSet::from_iter(vec!["eth".to_string(), "debug".to_string()]);
 
-                        let mut server = JsonRpcServer::new("127.0.0.1:3000".to_string()).with_proxy(eth_client_address.clone())
-                        .with_cors(vec!["*".to_string()]);
+                        let mut server = JsonRpcServer::new("127.0.0.1:3000".to_string())
+                            .with_proxy(eth_client_address.clone())
+                            .with_cors(vec!["*".to_string()]);
 
-                        server.add_method(Web3ApiServerImpl{}.into_rpc())?;
+                        server.add_method(Web3ApiServerImpl {}.into_rpc())?;
 
                         if api.contains("eth") {
                             server.add_method(
@@ -195,11 +184,9 @@ fn main() -> Result<()> {
                         }
 
                         if api.contains("debug") {
-                            let bundler_grpc_client = BundlerClient::connect(format!(
-                                "http://{}",
-                                "127.0.0.1:3002",
-                            ))
-                            .await?;
+                            let bundler_grpc_client =
+                                BundlerClient::connect(format!("http://{}", "127.0.0.1:3002",))
+                                    .await?;
                             server.add_method(
                                 DebugApiServerImpl {
                                     uopool_grpc_client,
@@ -210,10 +197,7 @@ fn main() -> Result<()> {
                         }
 
                         let _handle = server.start().await?;
-                        info!(
-                            "Started bundler JSON-RPC server at {:}",
-                            "127.0.0.1:3000",
-                        );
+                        info!("Started bundler JSON-RPC server at {:}", "127.0.0.1:3000",);
 
                         pending::<Result<()>>().await
                     }
@@ -223,7 +207,6 @@ fn main() -> Result<()> {
             };
             rt.block_on(run_until_ctrl_c(task))?;
             Ok(())
-
         })?
         .join()
         .unwrap_or_else(|e| panic::resume_unwind(e))
