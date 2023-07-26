@@ -1,0 +1,25 @@
+[package]
+name = "research"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aa_bundler_primitives = { git = "https://github.com/qi-protocol/aa-bundler", rev="e34335b", package = "aa-bundler-primitives" }
+aa_bundler_grpc = { git = "https://github.com/qi-protocol/aa-bundler", rev="e34335b", package = "aa-bundler-grpc" }
+aa_bundler_rpc = { git = "https://github.com/qi-protocol/aa-bundler", rev="e34335b", package = "aa-bundler-rpc" }
+
+
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+dirs = "4.0"
+ethers = { version = "2.0.4" }
+tracing = "0.1"
+tokio = { version = "1.18", features = ["full"] }
+expanded-pathbuf = "0.1"
+log = "0.4.19"
+pin-utils = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dotenv = "0.15.0"
+env_logger = "0.10.0"
