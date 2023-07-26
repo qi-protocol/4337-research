@@ -2,14 +2,14 @@ use ethers::{
     prelude::{MiddlewareBuilder, NonceManagerMiddleware, SignerMiddleware},
     providers::{Http, Middleware, Provider},
     signers::{coins_bip39::English, LocalWallet, MnemonicBuilder, Signer},
-    types::{Address, TransactionRequest, U256},
+    types::{TransactionRequest, U256},
     utils::{Geth, GethInstance},
 };
-use std::{env, ops::Mul, sync::Arc, time::Duration};
+use std::{ops::Mul, time::Duration};
 use tempdir::TempDir;
 
-pub type ClientType = NonceManagerMiddleware<SignerMiddleware<Provider<Http>, LocalWallet>>;
-pub const KEY_PHRASE: &str = "test test test test test test test test test test test junk";
+type ClientType = NonceManagerMiddleware<SignerMiddleware<Provider<Http>, LocalWallet>>;
+const KEY_PHRASE: &str = "test test test test test test test test test test test junk";
 
 pub(crate) async fn setup_geth() -> anyhow::Result<(GethInstance, ClientType)> {
     let chain_id: u64 = 1337;
